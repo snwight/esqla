@@ -12,10 +12,6 @@ from sqlalchemy.sql import select
 from sqlalchemy.schema import Table, Column, MetaData
 from sqlalchemy.engine import reflection
 
-# from jsonalchemymapper import *
-# import string, random, copy
-
-
 class SqlaCore():
     '''
     encapsulate a limited subset of the SQLAlchemy Core API

@@ -1,6 +1,11 @@
-#:author: snwight, northwight@gmail.com
-#:license: don't be a dick
-
+###############################################################################
+# module: SqlaCore.py
+# description: Harshly reduced subset of SQLAlchemy Core API api
+# author: snwight, northwight@gmail.com
+# repos: github.com/snwight/erlsqlacore
+# license: dbad
+# date: oct 2012
+###############################################################################
 from sqlalchemy import engine, create_engine, text
 from sqlalchemy.types import String
 from sqlalchemy.sql import select

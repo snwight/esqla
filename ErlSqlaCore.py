@@ -1,5 +1,5 @@
 ###############################################################################
-# module: ErlSQLACore.py
+# module: ErlSqlaCore.py
 # description: Python sibling of erlsqlacore.erl, handles message passing 
 # between Erlang node/s and SQLACore module (simple SQLAlchemy Core api api)
 # ...fully dependent upon erlport, by github.com/hdima/erlport

@@ -12,11 +12,14 @@ from sqlalchemy.sql import select
 from sqlalchemy.schema import Table, Column, MetaData
 from sqlalchemy.engine import reflection
 
+from subprocess import call
+import os 
+
 class SqlaCore():
     '''
     encapsulate a limited subset of the SQLAlchemy Core API
     '''
-    def __init__(self, source="sqlite:////tmp/test.db"):
+    def __init__(self, source=None):
         # hook ourselves up to SQLAlchemy using Python/DB interface "source"
         self.engine = create_engine(source, echo=False)
         # reflect the existing SQL schema
@@ -27,7 +30,6 @@ class SqlaCore():
         self.trans = None
         self.autocommit = True
 
-
     def _checkConnection(self):
         if self.conn is None:
             self.conn = self.engine.connect()
@@ -35,7 +37,6 @@ class SqlaCore():
             if not self.conn.in_transaction():
                 self.trans = self.conn.begin()
         self.conn.execution_options(autocommit=self.autocommit)
-
 
     def _getTableObject(self, tName=None):
         '''
@@ -47,10 +48,25 @@ class SqlaCore():
                     return t
         return None
 
+    def loadSchema(self, schemaFile=None):
+        '''
+        create and load db - primarily useful for testing
+        '''
+        ## create postgres db
+        #        cmd = '''psql -q -U vesper -d jsonmap_db 
+        #                 < {0} 2>/dev/null'''.format(schemaFile)
+        ## create mysql db
+        #        cmd = '''mysql -p've$per' -u vesper jsonmap_db 
+        #                 < {0}'''.format(self.schemaFile)
+        cmd = "sqlite3 /tmp/test.db < {0}".format(schemaFile)
+        call(cmd, shell=True)
+        return True
 
     def get(self, argList):
         '''
-        QUERY implementation - simple single-table retrieval for now!
+        QUERY implementation - 
+        criminally simplistic single-table retrieval for now!
+        nb: --- empty entries match all ---
         argList[tableName => self-evident
                 pKeyDict => {primary_key_1: match_value1, ...}
                 colDict => None | {colname1: val1, colname2: val2,...}]
@@ -75,8 +91,7 @@ class SqlaCore():
         result = self.conn.execute(query)
         return result
 
-
-    def add(self, argList):
+    def upsert(self, argList):
         '''
         UPSERT implementation
         argList[tableName => self-evident
@@ -87,7 +102,6 @@ class SqlaCore():
             return None
         [tableName, pKeyDict, colDict] = argList
         table = self._getTableObject(tableName)
-
         self._checkConnection()
         # try update first - if it fails we'll drop through to insert
         upd = table.update()
@@ -96,7 +110,6 @@ class SqlaCore():
         result = self.conn.execute(upd, colDict)
         if result.rowcount:
             return result.rowcount
-
         # update failed - try inserting new row
         for pk, pv in pKeyDict.items():
             # yeah why not?
@@ -104,7 +117,6 @@ class SqlaCore():
         ins = table.insert()
         result = self.conn.execute(ins, argDict)
         return result.rowcount
-
 
     def remove(self, argList):
         '''
@@ -126,21 +138,17 @@ class SqlaCore():
         result = self.conn.execute(cmd)
         return result.rowcount
 
-
     def commit(self):
         if self.conn is not None:
             if self.conn.in_transaction():
                 self.trans.commit()
-
 
     def rollback(self):
         if self.conn is not None:
             if self.conn.in_transaction():
                 self.trans.rollback()
 
- 
     def close(self):
         if self.conn is not None:
             self.conn.close()
             self.conn = None
-

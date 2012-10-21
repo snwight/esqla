@@ -121,7 +121,7 @@ class SqlaCore():
             return result.rowcount
         # update failed - try inserting new row, with those same pri keys
         for (pk, pv) in pKeyVals:
-`            keyValDict[pk] = pv
+            keyValDict[pk] = pv
         ins = table.insert()
         result = self.conn.execute(ins, argDict)
         return result.rowcount

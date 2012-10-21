@@ -17,37 +17,31 @@ class ErlSqlaCore(Protocol):
         pass
 
     def handle_port(self, port=None):
-        # store active port descriptor
-        self.activePort = port
+        # never mind 
         return "ported"
 
     def handle_start(self, configString=None):
         # crank up SQLAlchemy engine
-        #        self.sqlaconfig = String(configString)
-        self.sqlaconfig = "sqlite:////tmp/test.db"
-        self.sqlacore = SqlaCore(self.sqlaconfig)
+        self.sqlacore = SqlaCore(configString, "./schema1.sql")
         if self.sqlacore:
-            self.sqlacore.loadSchema("/Users/snwight/erlsqlacore/schema1.sql")
-        return "started"
+            return "started"
+        return "failed start"
         
     def handle_get(self, argList=None):
         rowSet = self.sqlacore.get(argList)
         # return FULL rowset result, for now!
-        self.activePort.write(rowSet)
         return rowSet
 
     def handle_upsert(self, argList=None):
         rowCount = self.sqlacore.upsert(argList)
-        self.activePort.write(rowCount)
         return rowCount
 
     def handle_remove(self, argList=None):
         rowCount = self.sqlacore.remove(argList)
-        self.activePort.write(rowCount)
         return rowCount
 
 if __name__ == "__main__":
     proto = ErlSqlaCore()
-    proto.run(Port(use_stdio=True))
+    proto.run(Port(packet=4, use_stdio=True))
 
 

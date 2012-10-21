@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% module: erlsqlacore
-%% description: use erlport to connect Erlang processes to SQLAlchemy 
+%% description: erlang port to connect Erlang processes to SQLAlchemy 
 %% author: github.com/snwight
 %% license: dbad
 %% date: oct 2012
@@ -11,8 +11,7 @@
 init() ->
     %% start up python sibling module - it will await our instructions
     Port = open_port({spawn, "python -u ErlSqlaCore.py"},
-		     [{packet, 1}, binary, 
-		      {env, [{"PYTHONPATH", "../src"}]}]),
+		     [{packet, 4}, binary, use_stdio]),
     port_command(Port, term_to_binary({port, term_to_binary(Port)})),
     handle(Port).
 
@@ -33,19 +32,27 @@ handle(Port) ->
     end.
 
 start(Port, ConfigString) ->
-    port_command(Port, term_to_binary({start, term_to_binary(ConfigString)})),
+    %% pass SQLAlchemy configuration URI into python land
+    Payload = list_to_binary(ConfigString),
+    port_command(Port, term_to_binary({start, Payload})),
     handle(Port).
 
-get(Port, ArgList) ->
-    port_command(Port, term_to_binary({get, term_to_binary(ArgList)})),
+get(Port, [Table, KeyVals, Hints]) ->
+    %% retrieve matching rows
+    Payload = [Table, KeyVals, Hints],
+    port_command(Port, term_to_binary({get, Payload})),
     handle(Port).
 
-upsert(Port, ArgList) ->
-    port_command(Port, term_to_binary({upsert, term_to_binary(ArgList)})),
+upsert(Port, [Table, PKeyVal, KeyVals]) ->
+    %% update matching or insert new rows
+    Payload = [Table, PKeyVal, KeyVals],
+    port_command(Port, term_to_binary({upsert, Payload})),
     handle(Port).
 
-remove(Port, ArgList) ->
-    port_command(Port, term_to_binary({remove, term_to_binary(ArgList)})),
+remove(Port, [Table, PKeyVal, KeyVals]) ->
+    %% delete matching rows
+    Payload = [Table, PKeyVal, KeyVals],
+    port_command(Port, term_to_binary({remove, Payload})),
     handle(Port).
 
     

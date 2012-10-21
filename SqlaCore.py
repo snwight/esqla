@@ -19,7 +19,9 @@ class SqlaCore():
     '''
     encapsulate a limited subset of the SQLAlchemy Core API
     '''
-    def __init__(self, source=None):
+    def __init__(self, source=None, testSchema=None):
+        if testSchema:
+            self.loadSchema(testSchema)
         # hook ourselves up to SQLAlchemy using Python/DB interface "source"
         self.engine = create_engine(source, echo=False)
         # reflect the existing SQL schema
@@ -67,26 +69,27 @@ class SqlaCore():
         QUERY implementation - 
         criminally simplistic single-table retrieval for now!
         nb: --- empty entries match all ---
-        argList[tableName => self-evident
-                pKeyDict => {primary_key_1: match_value1, ...}
-                colDict => None | {colname1: val1, colname2: val2,...}]
+        nb: SQLA knows primary keys, no need for special list here
+        argList[string tableName => "table_name",
+                tuple list keyVals => None | [("col1", val), ...],
+                tuple list hints => None | [("limit", N)], [("offset", N)]]
+                ]
         '''
         if argList is None:
             return None
-        [tableName, pKeyDict, colDict, hints] = argList
+        [tableName, kvs, h] = argList
         table = self._getTableObject(tableName)
-        hints = hints or {}
-        limit = hints.get('limit')
-        offset = hints.get('offset')
         query = select([table])
-        for pk, pv in pKeyDict.items():
-            query = query.where(table.c[pk] == pv)
-        for ck, cv in pKeyDict.items():
-            query = query.where(table.c[ck] == cv)
-        if limit:
-            query = query.limit(limit)
-        if offset:
-            query = query.offset(offset)
+        if kvs:
+            for (k, v) in kvs:
+                query = query.where(table.c[k] == v)
+#        if h:
+#            limit = hints.get('limit')
+#            if limit:
+#                query = query.limit(limit)
+#            offset = hints.get('offset')
+#            if offset:
+#                query = query.offset(offset)
         self._checkConnection()
         result = self.conn.execute(query)
         return result
@@ -94,26 +97,31 @@ class SqlaCore():
     def upsert(self, argList):
         '''
         UPSERT implementation
-        argList[tableName => self-evident
-                pKeyDict => {primary_key_1: match_value1, ...}
-                colDict => None | {colname1: val1, colname2: val2,...}]
+        nb: require primary key/s here
+        argList[string tableName => "table_name",
+                tuple pKeyVal => ("primary_key_name", match_value1),
+                tuple list keyVals => None | [("col1", val), ...],
         '''
         if argList is None:
             return None
-        [tableName, pKeyDict, colDict] = argList
+        [tableName, pKeyVals, keyVals] = argList
         table = self._getTableObject(tableName)
         self._checkConnection()
         # try update first - if it fails we'll drop through to insert
         upd = table.update()
-        for pk, pv in pKeyDict.items():
+        for (pk, pv) in pKeyVals:
             upd = upd.where(table.c[pk] == pv)
-        result = self.conn.execute(upd, colDict)
+           
+        #!!!!!!!!!! 
+        keyValDict = dict(keyVals)
+        #!!!!!!!!!!
+
+        result = self.conn.execute(upd, keyValDict)
         if result.rowcount:
             return result.rowcount
-        # update failed - try inserting new row
-        for pk, pv in pKeyDict.items():
-            # yeah why not?
-            colDict[pk] = pv
+        # update failed - try inserting new row, with those same pri keys
+        for (pk, pv) in pKeyVals:
+            keyValDict[pk] = pv
         ins = table.insert()
         result = self.conn.execute(ins, argDict)
         return result.rowcount
@@ -121,18 +129,20 @@ class SqlaCore():
     def remove(self, argList):
         '''
         DELETE implementation
-        argList[tableName => self-evident
-                pKeyDict => {primary_key_1: match_value1, ...}
-                colDict => None | {colname1: val1, colname2: val2,...}]
+        nb: require primary key/s here
+        argList[string tableName => "table_name",
+                tuple pKeyVal => ("primary_key_name", match_value1),
+                tuple list keyVals => None | [("col1", val), ...],
+                colDict => None | [("colname1", val1), ...]
         '''
         if argList is None:
             return None
         [tableName, pKeyDict, colDict] = argList
         table = self._getTableObject(tableName)
         cmd = table.delete()
-        for pk, pv in pKeyDict.items():
+        for (pk, pv) in pKeyVals:
             cmd = cmd.where(table.c[pk] == pv)
-        for ck, cv in pKeyDict.items():
+        for (ck, cv) in keyVals:
             cmd = cmd.where(table.c[ck] == cv)
         self._checkConnection()
         result = self.conn.execute(cmd)

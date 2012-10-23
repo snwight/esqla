@@ -1,7 +1,7 @@
 erlsqlacore
 ===========
 
-Using erlport [thank you Dmitry! hdima/erlport] to expose a grossly simplified subset of the SQLAlchemy Core API as a small set of Erlang shell commands.
+Using erlport [ thank you Dmitry! https://github.com/hdima/erlport ] to expose a grossly simplified subset of the SQLAlchemy Core API as a small set of Erlang shell commands.
 
 I haven't packaged this up yet, too busy iterating...
 

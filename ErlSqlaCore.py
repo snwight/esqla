@@ -26,7 +26,7 @@ class ErlSqlaCore(Protocol):
         if self.sqlacore:
             return "started"
         return "failed start"
-        
+
     def handle_get(self, argList=None):
         rowSet = self.sqlacore.get(argList)
         # return FULL rowset result, for now!
@@ -42,6 +42,4 @@ class ErlSqlaCore(Protocol):
 
 if __name__ == "__main__":
     proto = ErlSqlaCore()
-    proto.run(Port(packet=4, use_stdio=True))
-
-
+    proto.run(Port(packet=4, use_stdio=False))

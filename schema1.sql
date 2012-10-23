@@ -8,20 +8,23 @@ CREATE TABLE artist(
   artistname  	VARCHAR(255) NOT NULL DEFAULT 'none',
   artistgender	VARCHAR(6) NOT NULL DEFAULT 'none'
   CHECK (artistgender IN ('none', 'M', 'F', 'TX')),
-  artistbday	DATE
+  --  artistbday	DATE
+  artistbday	VARCHAR(12)
 );
 -- "for each track there is a unique ID, name, date, length"
 CREATE TABLE track(
   trackid	INTEGER PRIMARY KEY,
   trackname   	VARCHAR(255) NOT NULL DEFAULT 'none',
   tracklength	INTEGER NOT NULL DEFAULT 0,
-  trackdate	DATE
+  -- trackdate		DATE
+  trackdate	VARCHAR(12)
 );
 -- "for each album there is a unique ID, name, date"
 CREATE TABLE album(
   albumid	INTEGER PRIMARY KEY,
   albumname 	VARCHAR(255) NOT NULL DEFAULT 'none',
-  albumdate	DATE
+  -- albumdate		DATE
+  albumdate	VARCHAR(12)
 );
 -- "for each label there is a unique ID, name, city"
 CREATE TABLE label(
@@ -35,7 +38,8 @@ CREATE TABLE grammy(
   grammywinner	INTEGER NOT NULL DEFAULT 0,
   grammyclass	VARCHAR(16) NOT NULL DEFAULT 'none'
   CHECK (grammyclass IN ('none', 'shmaltz', 'metal', 'exotica')),
-  grammydate	DATE
+  --  grammydate	DATE
+  grammydate	VARCHAR(12)
 );
 --
 -- functional dependencies

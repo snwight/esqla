@@ -7,13 +7,12 @@
 # date: oct 2012
 ###############################################################################
 from sqlalchemy import engine, create_engine, text
-from sqlalchemy.types import String
 from sqlalchemy.sql import select
 from sqlalchemy.schema import Table, Column, MetaData
 from sqlalchemy.engine import reflection
-
 from subprocess import call
-import os 
+from erlport import String
+
 
 class SqlaCore():
     '''
@@ -27,10 +26,12 @@ class SqlaCore():
         # reflect the existing SQL schema
         self.md = MetaData(self.engine)
         self.md.reflect(views=True)
+        self.insp = reflection.Inspector.from_engine(self.engine)
         # private matters
         self.conn = None
         self.trans = None
         self.autocommit = True
+
 
     def _checkConnection(self):
         if self.conn is None:
@@ -39,6 +40,7 @@ class SqlaCore():
             if not self.conn.in_transaction():
                 self.trans = self.conn.begin()
         self.conn.execution_options(autocommit=self.autocommit)
+
 
     def _getTableObject(self, tName=None):
         '''
@@ -49,6 +51,7 @@ class SqlaCore():
                 if t.name == tName:
                     return t
         return None
+
 
     def loadSchema(self, schemaFile=None):
         '''
@@ -64,6 +67,7 @@ class SqlaCore():
         call(cmd, shell=True)
         return True
 
+
     def get(self, argList):
         '''
         QUERY implementation - 
@@ -77,12 +81,14 @@ class SqlaCore():
         '''
         if argList is None:
             return None
-        [tableName, kvs, h] = argList
+        [tnm, kvs, h] = argList
+        tableName = String(tnm)
         table = self._getTableObject(tableName)
         query = select([table])
         if kvs:
             for (k, v) in kvs:
-                query = query.where(table.c[k] == v)
+                key = String(k)
+                query = query.where(table.c[key] == v)
 #        if h:
 #            limit = hints.get('limit')
 #            if limit:
@@ -92,7 +98,12 @@ class SqlaCore():
 #                query = query.offset(offset)
         self._checkConnection()
         result = self.conn.execute(query)
-        return result
+        rows = []
+        cols = self.insp.get_columns(tableName)
+        for r in result:
+            [rows.append([tableName, c['name'], r[c['name']]]) for c in cols]
+        return rows
+
 
     def upsert(self, argList):
         '''
@@ -126,6 +137,7 @@ class SqlaCore():
         result = self.conn.execute(ins, argDict)
         return result.rowcount
 
+
     def remove(self, argList):
         '''
         DELETE implementation
@@ -148,15 +160,18 @@ class SqlaCore():
         result = self.conn.execute(cmd)
         return result.rowcount
 
+
     def commit(self):
         if self.conn is not None:
             if self.conn.in_transaction():
                 self.trans.commit()
 
+
     def rollback(self):
         if self.conn is not None:
             if self.conn.in_transaction():
                 self.trans.rollback()
+
 
     def close(self):
         if self.conn is not None:

@@ -11,7 +11,7 @@
 init() ->
     %% start up python sibling module - it will await our instructions
     Port = open_port({spawn, "python -u ErlSqlaCore.py"},
-		     [{packet, 4}, binary, use_stdio]),
+		     [{packet, 4}, binary, nouse_stdio]),
     port_command(Port, term_to_binary({port, term_to_binary(Port)})),
     handle(Port).
 
@@ -20,7 +20,7 @@ handle(Port) ->
         {Port, {data, Data}} ->
 	    case binary_to_term(Data) of 
 		<<"ported">> -> Port;
-		<<"started">> -> "started up";
+		<<"started">>  -> "started up";
 		X -> X
 	    end;
 	_Other ->

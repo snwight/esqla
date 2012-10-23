@@ -20,8 +20,8 @@ handle(Port) ->
         {Port, {data, Data}} ->
 	    case binary_to_term(Data) of 
 		<<"ported">> -> Port;
-		<<"started">>  -> "started up";
-		X -> X
+		<<"started">> -> "started up";
+		Term -> Term
 	    end;
 	_Other ->
 	    port_close(Port),

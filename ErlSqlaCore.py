@@ -23,9 +23,9 @@ class ErlSqlaCore(Protocol):
     def handle_start(self, configString=None):
         # crank up SQLAlchemy engine
         self.sqlacore = SqlaCore(configString, "./schema1.sql")
-        if self.sqlacore:
-            return "started"
-        return "failed start"
+        if not self.sqlacore:
+            return "failed start"
+        return "started"
 
     def handle_get(self, argList=None):
         rowSet = self.sqlacore.get(argList)

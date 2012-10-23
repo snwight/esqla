@@ -81,22 +81,28 @@ class SqlaCore():
         '''
         if argList is None:
             return None
-        [tnm, kvs, h] = argList
+        [tnm, kvs, hints] = argList
         tableName = String(tnm)
         table = self._getTableObject(tableName)
         query = select([table])
-        if kvs:
-            for (k, v) in kvs:
-                key = String(k)
-                query = query.where(table.c[key] == v)
-#        if h:
-#            limit = hints.get('limit')
-#            if limit:
-#                query = query.limit(limit)
-#            offset = hints.get('offset')
-#            if offset:
-#                query = query.offset(offset)
+        # strip empty tuples now
+        for t in kvs:
+            if not len(t):
+                continue
+            (k, v) = t
+            query = query.where(table.c[String(k)] == v)
+        print "DEBUG hint:", hints
+        for h in hints:
+            if not len(h):
+                continue
+            (k, v) = h
+            sk = String(k)
+            if sk == "limit":
+                query = query.limit(v)
+            if sk == "offset":
+                query = query.offset(v)
         self._checkConnection()
+        print "DEBUG query:", query
         result = self.conn.execute(query)
         rows = []
         cols = self.insp.get_columns(tableName)

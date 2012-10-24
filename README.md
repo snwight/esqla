@@ -5,10 +5,20 @@ Using erlport [ thank you Dmitry! https://github.com/hdima/erlport ] to expose a
 
 I haven't packaged this up yet, too busy iterating...
 
-The working functionality is current only the get:
+get: (returns entire matching row currently)
 
-erlsqlacore:get("table_name", [ {"column_name", val}, ...], 
-			      [ {"limit": val}, {"offset": val} ])
+erlsqlacore:get([ "table_name", [ {"column_name", val}, ...], 
+			        [ {"limit": val}, {"offset": val} ] ])
+
+upsert:
+
+erlsqlacore:upsert([ "table_name", {"primary_key_name", val},
+			        [ {"column_name", val}, ...] ])
+				
+remove:
+
+erlsqlacore:remove([ "table_name", [ {"column_name", val}, ...] 
+
 
 I should describe this thing better, though.
 

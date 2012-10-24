@@ -6,7 +6,8 @@
 # license: dbad
 # date: oct 2012
 ###############################################################################
-from sqlalchemy import engine, create_engine, text
+import sqlalchemy.types
+from sqlalchemy import engine, create_engine
 from sqlalchemy.sql import select
 from sqlalchemy.schema import Table, Column, MetaData
 from sqlalchemy.engine import reflection
@@ -84,14 +85,18 @@ class SqlaCore():
         [tnm, kvs, hints] = argList
         tableName = String(tnm)
         table = self._getTableObject(tableName)
+        # nb: SELECT * for now
         query = select([table])
         # strip empty tuples now
         for t in kvs:
             if not len(t):
                 continue
             (k, v) = t
-            query = query.where(table.c[String(k)] == v)
-        print "DEBUG hint:", hints
+            kStr = String(k)
+            if isinstance(table.c[kStr].type, sqlalchemy.types.INTEGER):
+                query = query.where(table.c[kStr] == v)
+            else:
+                query = query.where(table.c[kStr] == String(v))
         for h in hints:
             if not len(h):
                 continue
@@ -102,12 +107,11 @@ class SqlaCore():
             if sk == "offset":
                 query = query.offset(v)
         self._checkConnection()
-        print "DEBUG query:", query
+        # print "DEBUG query:", query
         result = self.conn.execute(query)
         rows = []
-        cols = self.insp.get_columns(tableName)
         for r in result:
-            [rows.append([tableName, c['name'], r[c['name']]]) for c in cols]
+            [rows.append([table.name, c.name, r[c.name]]) for c in table.c]
         return rows
 
 
@@ -121,47 +125,62 @@ class SqlaCore():
         '''
         if argList is None:
             return None
-        [tableName, pKeyVals, keyVals] = argList
-        table = self._getTableObject(tableName)
+        [tableName, pKeyVal, keyVals] = argList
+        table = self._getTableObject(String(tableName))
         self._checkConnection()
         # try update first - if it fails we'll drop through to insert
         upd = table.update()
-        for (pk, pv) in pKeyVals:
-            upd = upd.where(table.c[pk] == pv)
-           
-        #!!!!!!!!!! 
-        keyValDict = dict(keyVals)
-        #!!!!!!!!!!
-
-        result = self.conn.execute(upd, keyValDict)
+        # format our K,V tuples as acceptable types - key is always a string
+        (pk, pv) = pKeyVal
+        pkStr = String(pk)
+        # but val is a variant thing
+        if isinstance(table.c[pkStr].type, sqlalchemy.types.INTEGER):
+            pvStr = pv
+        else:
+            pvStr = String(pv)
+        upd = upd.where(table.c[pkStr] == pvStr)
+        kvDict = dict()
+        for t in keyVals:
+            if not len(t):
+                continue
+            (k, v) = t
+            kStr = String(k)
+            if isinstance(table.c[kStr].type, sqlalchemy.types.INTEGER):
+                kvDict[kStr] = v
+            else:
+                kvDict[kStr] = String(v)
+        result = self.conn.execute(upd, kvDict)
         if result.rowcount:
             return result.rowcount
-        # update failed - try inserting new row, with those same pri keys
-        for (pk, pv) in pKeyVals:
-            keyValDict[pk] = pv
+        # update failed - try inserting new row, with that same pri key
+        kvDict[pkStr] = pvStr
         ins = table.insert()
-        result = self.conn.execute(ins, argDict)
+        result = self.conn.execute(ins, kvDict)
         return result.rowcount
 
 
     def remove(self, argList):
         '''
         DELETE implementation
-        nb: require primary key/s here
         argList[string tableName => "table_name",
-                tuple pKeyVal => ("primary_key_name", match_value1),
                 tuple list keyVals => None | [("col1", val), ...],
                 colDict => None | [("colname1", val1), ...]
         '''
         if argList is None:
             return None
-        [tableName, pKeyVals, keyVals] = argList
-        table = self._getTableObject(tableName)
+        [tableName, keyVals] = argList
+        table = self._getTableObject(String(tableName))
         cmd = table.delete()
-        for (pk, pv) in pKeyVals:
-            cmd = cmd.where(table.c[pk] == pv)
-        for (ck, cv) in keyVals:
-            cmd = cmd.where(table.c[ck] == cv)
+        kvDict = dict()
+        for t in keyVals:
+            if not len(t):
+                continue
+            (k, v) = t
+            kStr = String(k)
+            if isinstance(table.c[kStr].type, sqlalchemy.types.INTEGER):
+                kvDict[kStr] = v
+            else:
+                kvDict[kStr] = String(v)
         self._checkConnection()
         result = self.conn.execute(cmd)
         return result.rowcount

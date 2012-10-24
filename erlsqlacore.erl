@@ -49,9 +49,9 @@ upsert(Port, [Table, PKeyVal, KeyVals]) ->
     port_command(Port, term_to_binary({upsert, Payload})),
     handle(Port).
 
-remove(Port, [Table, PKeyVal, KeyVals]) ->
+remove(Port, [Table, KeyVals]) ->
     %% delete matching rows
-    Payload = [Table, PKeyVal, KeyVals],
+    Payload = [Table, KeyVals],
     port_command(Port, term_to_binary({remove, Payload})),
     handle(Port).
 

@@ -5,6 +5,13 @@ Using erlport [ thank you Dmitry! https://github.com/hdima/erlport ] to expose a
 
 I haven't packaged this up yet, too busy iterating...
 
+You'll want to clone this repos:
+>> git clone git@github.com:snwight/erlsqlacore.git
+
+grab a copy of erlport:
+>> cd erlsqlacore/
+>> git clone git://github.com/hdima/erlport.git
+
 The command line interface once you're in the Erlang shell is:
 
 compile

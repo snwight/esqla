@@ -6,19 +6,20 @@ Using erlport [ thank you Dmitry! https://github.com/hdima/erlport ] to expose a
 I haven't packaged this up yet, too busy iterating...
 
 You'll want to clone this repos:
->> git clone git@github.com:snwight/erlsqlacore.git
+> git clone git@github.com:snwight/erlsqlacore.git
 
 grab a copy of erlport:
->> cd erlsqlacore/
->> git clone git://github.com/hdima/erlport.git
+> cd erlsqlacore/
+
+> git clone git://github.com/hdima/erlport.git
 
 The command line interface once you're in the Erlang shell is:
 
 compile
->> c(esqla).
+> c(esqla).
 
 establish port connection
->> Port = esqla:init().
+> Port = esqla:init().
 
 Start up SQLAlchemy engine, in this example with Sqlite and on-disk storage
 just change the 'configuration string' to connect to a running Postgres cluster, e.g.:
@@ -29,19 +30,19 @@ or Mysql, e.g.:
 
 
 start() also loads the test database into the chosen backend
->> esqla:start(Port, "sqlite:////tmp/test.db").
+> esqla:start(Port, "sqlite:////tmp/test.db").
 
 
 get() returns entire matching row currently - absent parameters match ANY
->> esqla:get([ "table_name", [ {"column_name", val}, ...], 
+> esqla:get([ "table_name", [ {"column_name", val}, ...], 
 			        [ {"limit": val}, {"offset": val} ] ])
 
 upsert() is update (on primary key match) OR insert (if primary key non-existent) 
->> esqla:upsert([ "table_name", {"primary_key_name", val},
+> esqla:upsert([ "table_name", {"primary_key_name", val},
 			        [ {"column_name", val}, ...] ])
 				
 remove() enthusiastically deletes matching rows - absent parameters match ANY!!!
->> esqla:remove([ "table_name", [ {"column_name", val}, ...] 
+> esqla:remove([ "table_name", [ {"column_name", val}, ...] 
 
 
 I should describe this thing better, though.
@@ -61,7 +62,7 @@ I include a sample SQL database and load file (combined into "schema1.sql") whic
 
 
 example get() from test DB:
->> esqla:get(P, ["artist", [{}],  [{}] ]).                                
+> esqla:get(P, ["artist", [{}],  [{}] ]).                                
 [["artist","artistid",1],
  ["artist","artistname","bobby"],
  ["artist","artistgender","M"],
@@ -94,7 +95,7 @@ example get() from test DB:
 
 
 add a match filter:
->> esqla:get(P, ["artist", [{"artistid", 1}], [{}]]).
+> esqla:get(P, ["artist", [{"artistid", 1}], [{}]]).
 [["track","trackid",1],
  ["track","trackname","love song one"],
  ["track","tracklength",360],
@@ -102,10 +103,10 @@ add a match filter:
 
 
 delete that row:
->> esqla:remove(P, ["artist", [{"artistid", 1}]).
->> 1
+> esqla:remove(P, ["artist", [{"artistid", 1}]).
+> 1
 
 
 insert it again:
->> esqla:upsert(P, ["artist", {"artistid", 1}, [{"artistname","bobby"}, {artistgender","M"}, {"artistbday","1961-05-15"}]]).
->> 1
+> esqla:upsert(P, ["artist", {"artistid", 1}, [{"artistname","bobby"}, {artistgender","M"}, {"artistbday","1961-05-15"}]]).
+> 1

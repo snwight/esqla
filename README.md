@@ -34,15 +34,15 @@ start() also loads the test database into the chosen backend
 
 
 get() returns entire matching row currently - absent parameters match ANY
-> esqla:get([ "table_name", [ {"column_name", val}, ...], 
+> esqla:get(Port, [ "table_name", [ {"column_name", val}, ...], 
 			        [ {"limit": val}, {"offset": val} ] ])
 
 upsert() is update (on primary key match) OR insert (if primary key non-existent) 
-> esqla:upsert([ "table_name", {"primary_key_name", val},
+> esqla:upsert(Port, [ "table_name", {"primary_key_name", val},
 			        [ {"column_name", val}, ...] ])
 				
 remove() enthusiastically deletes matching rows - absent parameters match ANY!!!
-> esqla:remove([ "table_name", [ {"column_name", val}, ...] 
+> esqla:remove(Port, [ "table_name", [ {"column_name", val}, ...] 
 
 
 I should describe this thing better, though.

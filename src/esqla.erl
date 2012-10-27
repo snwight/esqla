@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% module: esqla
 %% description: erlang port to connect Erlang processes to SQLAlchemy 
-%% author: github.com/snwight
+%% author: github.com/snwight, northwight@gmail.com
 %% license: dbad
 %% date: oct 2012
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

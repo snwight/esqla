@@ -1,3 +1,10 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% module: esqla_app
+%% description: application module for esqla, Erlang API to SQLAlchemy Core
+%% author: github.com/snwight, northwight@gmail.com
+%% license: dbad
+%% date: oct 2012
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -module(esqla_app).
 
 -behaviour(application).

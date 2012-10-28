@@ -9,7 +9,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/0]).
+-export([start_link/0, stop/0]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -20,35 +20,41 @@
          code_change/3]).
 
 %% API functions
--export([get/2, upsert/3, remove/2]).
+-export([get/3, upsert/3, remove/2, schemata/0]).
 
 %%
 %% operation and maintenance API
 %%
 start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+    %% HARD-CODED argument list here... funky!
+    gen_server:start_link({local, ?MODULE}, ?MODULE, 
+			  ["sqlite:////tmp/test.db", 
+			   "../priv/schema1.sql"], []).
+
+stop() ->
+    gen_server:cast(?MODULE, stop).
+
 
 init([SqlaConfigString, TestDB]) ->
     %% start up python sibling module - it will await our instructions
-    PythonPort = open_port({spawn, "python -u ../priv/ErlSqlaCore.py"},
+    PythonPort = open_port({spawn, "python -u ../priv/esqla.py"},
 			   [{packet, 4}, binary, nouse_stdio, 
 			    {env, [{"PYTHONPATH", "../priv/erlport"}]}]),
     %% pass SQLAlchemy configuration URI into python land
     Payload = [list_to_binary(SqlaConfigString), list_to_binary(TestDB)],
     port_command(PythonPort, term_to_binary({start, Payload})),
-    Reply = handle_python(PythonPort),
-    {Reply, PythonPort}.
+    handle_python(PythonPort).
 
 %%
 %% primary client API!
 %%
-get(TableName, KVList) ->
+get(TableName, KVList, Hints) ->
     %% retrieve matching rows
-    ArgList = [TableName, KVList],
+    ArgList = [TableName, KVList, Hints],
     gen_server:call(?MODULE, {get, ArgList}).
 
 upsert(TableName, PrimaryKV, KVList) ->
-    %% update row if primary keys match or insert new row
+    %% update row if primary keys match, else insert new row
     ArgList = [TableName, PrimaryKV, KVList],
     gen_server:call(?MODULE, {upsert, ArgList}).
 
@@ -56,6 +62,10 @@ remove(TableName, KVList) ->
     %% delete matching row/s
     ArgList = [TableName, KVList],
     gen_server:call(?MODULE, {remove, ArgList}).
+
+schemata() ->
+    %% print SQL schema
+    gen_server:call(?MODULE, {schemata}).
 
 %%
 %% callback functions 
@@ -84,7 +94,11 @@ handle_python(PythonPort) ->
     receive
         {PythonPort, {data, Data}} ->
 	    %% Convert binary data to term
-            {ok, binary_to_term(Data)};
+            case binary_to_term(Data) of
+		<<"started">> -> {ok, PythonPort};
+		<<"failed start">> -> {stop, "failed startup"};
+		Term -> io:fwrite(Term)
+	    end;
 	_Other ->
 	    port_close(PythonPort),
 	    {whoops, _Other}

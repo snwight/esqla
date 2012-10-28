@@ -8,7 +8,7 @@
 # license: dbad
 # date: oct 2012
 ###############################################################################
-from SqlaCore import *
+from sqla import *
 from erlport import Port, Protocol
 from erlport import Atom, String
 
@@ -16,30 +16,30 @@ class esqla(Protocol):
     def __init__(self):
         pass
 
-    def handle_port(self, port=None):
-        # never mind 
-        return "ported"
-
-    def handle_start(self, configString=None):
+    def handle_start(self, argList):
         # crank up SQLAlchemy engine
-        self.sqlacore = SqlaCore(configString, "../priv/schema1.sql")
+        [configString, testDB] = argList
+        self.sqlacore = sqla(configString, testDB)
         if not self.sqlacore:
             return "failed start"
         return "started"
 
+    def handle_schemata(self):
+        # return C-formatted string 
+        return self.sqlacore.schemata()
+
     def handle_get(self, argList=None):
-        rowSet = self.sqlacore.get(argList)
         # return FULL rowset result, for now!
-        return rowSet
+        return self.sqlacore.get(argList)
 
     def handle_upsert(self, argList=None):
-        rowCount = self.sqlacore.upsert(argList)
-        return rowCount
+        # return modified rows count
+        return self.sqlacore.upsert(argList)
 
     def handle_remove(self, argList=None):
-        rowCount = self.sqlacore.remove(argList)
-        return rowCount
+        # return deleted rows count
+        return self.sqlacore.remove(argList)
 
 if __name__ == "__main__":
-    proto = ErlSqlaCore()
+    proto = esqla()
     proto.run(Port(packet=4, use_stdio=False))

@@ -19,9 +19,9 @@ class sqla():
     '''
     encapsulate a limited subset of the SQLAlchemy Core API
     '''
-    def __init__(self, source=None, testSchema=None):
-        if testSchema:
-            self.loadSchema(testSchema)
+    def __init__(self, source=None, testDB=None):
+        if testDB:
+            self.loadSchema(testDB)
         # hook ourselves up to SQLAlchemy using Python/DB interface "source"
         self.engine = create_engine(source, echo=False)
         # reflect the existing SQL schema
@@ -67,6 +67,35 @@ class sqla():
         cmd = "sqlite3 /tmp/test.db < {0}".format(schemaFile)
         call(cmd, shell=True)
         return True
+
+
+    def schemata(self):        
+        s = 'SQL schema:: '
+        for tbl in self.insp.get_table_names():
+            s += '~nTABLE: ' + tbl
+            for c in self.insp.get_columns(tbl):
+                s += '~n\t' + c['name']
+            for pk in self.insp.get_primary_keys(tbl):
+                s += '~n\tPRIMARY KEY: ' + pk
+            for i in self.insp.get_indexes(tbl):
+                s += '~n\tINDEX: ' + i['name'] 
+                s += ' UNIQUE ' if 'unique' in i else '' + ' ON ' 
+                for ic in i['column_names']:
+                    s += ic + ' '
+            for fk in self.insp.get_foreign_keys(tbl):
+                s += '~n\tFOREIGN KEY: '
+                for cc in fk['constrained_columns']:
+                    s += cc + ' '
+                s += ' ON ' + fk['referred_table']  + ': '
+                for rc in fk['referred_columns']:
+                    s += rc + ' '
+        for vw in self.insp.get_view_names():
+            s += '~nVIEW: ' + vw
+            for c in self.insp.get_columns(vw):
+                s += '~n\t' + c['name']
+            s += '~nVIEW DEFINITION: '
+            s += '~n' + self.insp.get_view_definition(vw)+'~n'
+        return s
 
 
     def get(self, argList):

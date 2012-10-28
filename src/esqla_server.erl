@@ -31,9 +31,7 @@ start_link() ->
 			  ["sqlite:////tmp/test.db", 
 			   "../priv/schema1.sql"], []).
 
-stop() ->
-    gen_server:cast(?MODULE, stop).
-
+stop() ->  gen_server:cast(?MODULE, stop).
 
 init([SqlaConfigString, TestDB]) ->
     %% start up python sibling module - it will await our instructions
@@ -75,17 +73,13 @@ handle_call(_Request, _From, PythonPort) ->
     Reply = handle_python(PythonPort),
     {reply, Reply, PythonPort}.
 
-handle_cast(_Msg, State) ->
-    {noreply, State}.
+handle_cast(_Msg, State) -> {noreply, State}.
 
-handle_info(_Info, State) ->
-    {noreply, State}.
+handle_info(_Info, State) -> {noreply, State}.
 
-terminate(_Reason, _State) ->
-    ok.
+terminate(_Reason, PythonPort) -> port_close(PythonPort), ok.
 
-code_change(_OldVsn, State, _Extra) ->
-    {ok, State}.
+code_change(_OldVsn, State, _Extra) -> {ok, State}.
 
 %%
 %% Internal functions
@@ -97,7 +91,10 @@ handle_python(PythonPort) ->
             case binary_to_term(Data) of
 		<<"started">> -> {ok, PythonPort};
 		<<"failed start">> -> {stop, "failed startup"};
-		Term -> io:fwrite(Term)
+		{<<"schema">>, Term} -> io:fwrite(Term);
+		{<<"updatecount">>, Rowcount} -> Rowcount;
+		{<<"delcount">>, Rowcount} -> Rowcount;
+		{<<"result">>, Rows} -> Rows
 	    end;
 	_Other ->
 	    port_close(PythonPort),

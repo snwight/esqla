@@ -178,9 +178,10 @@ class sqla():
                 kvDict[kStr] = v
             else:
                 kvDict[kStr] = String(v)
-        result = self.conn.execute(upd, kvDict)
-        if result.rowcount:
-            return result.rowcount
+            # note that we do have a non-empty kvDict if we are here!
+            result = self.conn.execute(upd, kvDict)
+            if result.rowcount:
+                return result.rowcount
         # update failed - try inserting new row, with that same pri key
         kvDict[pkStr] = pvStr
         ins = table.insert()

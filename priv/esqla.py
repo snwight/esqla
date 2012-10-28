@@ -26,19 +26,19 @@ class esqla(Protocol):
 
     def handle_schemata(self):
         # return C-formatted string 
-        return self.sqlacore.schemata()
+        return ("schema", self.sqlacore.schemata())
 
     def handle_get(self, argList=None):
         # return FULL rowset result, for now!
-        return self.sqlacore.get(argList)
+        return ("result", self.sqlacore.get(argList))
 
     def handle_upsert(self, argList=None):
         # return modified rows count
-        return self.sqlacore.upsert(argList)
+        return ("updatecount", self.sqlacore.upsert(argList))
 
     def handle_remove(self, argList=None):
         # return deleted rows count
-        return self.sqlacore.remove(argList)
+        return ("delcount", self.sqlacore.remove(argList))
 
 if __name__ == "__main__":
     proto = esqla()

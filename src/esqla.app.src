@@ -1,12 +1,15 @@
 {application, esqla,
  [
-  {description, ""},
-  {vsn, "1"},
-  {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib
-                 ]},
-  {mod, { esqla_app, []}},
-  {env, []}
+  {description, "esqla demonstration app"},
+  {vsn, "0.1"},
+  {registered, [esqla]},
+  {applications, [kernel, stdlib]},
+  {mod, {esqla_app, []}},
+  {modules, [esqla_app, esqla_sup, esqla_server]},
+  {env, [
+	 %% defaults - sqlalchemy over sqlite
+	 {db_file, "/tmp/test.db"},
+	 {sqlalchemy_config, "sqlite:////tmp/test.db"},
+	 {test_db_loadfile, "../priv/schema1.sql"}
+	]}
  ]}.

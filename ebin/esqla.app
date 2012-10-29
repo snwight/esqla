@@ -1,8 +1,10 @@
 {application,esqla,
-             [{description,[]},
-              {vsn,"1"},
-              {registered,[]},
+             [{description,"esqla demonstration app"},
+              {vsn,"0.1"},
+              {registered,[esqla]},
               {applications,[kernel,stdlib]},
               {mod,{esqla_app,[]}},
-              {env,[]},
-              {modules,[esqla_app,esqla_server,esqla_sup]}]}.
+              {modules,[esqla_app,esqla_server,esqla_sup]},
+              {env,[{db_file,"/tmp/test.db"},
+                    {sqlalchemy_config,"sqlite:////tmp/test.db"},
+                    {test_db_loadfile,"../priv/schema1.sql"}]}]}.

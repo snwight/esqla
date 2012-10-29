@@ -22,7 +22,9 @@
 %% API functions
 %% ===================================================================
 
-start_link() -> supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+start_link() -> 
+    erlang:display("ESQLA_SUP:start_link()"),
+    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %% ===================================================================
 %% Supervisor callbacks

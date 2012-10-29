@@ -19,5 +19,9 @@
 start(_StartType, _StartArgs) ->
     esqla_sup:start_link().
 
-stop(_State) ->
+stop(PythonPort) ->
+    %% this is just sqlite cleanup - real DBs aren't this simple
+    {ok, Db} = application:get_env(db_file),
+    os:cmd(lists:concat(["rm ", Db])),
+    port_close(PythonPort),
     ok.

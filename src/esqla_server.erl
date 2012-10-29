@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% module: esqla_server
+%% module: esqla
 %% description: server module for esqla, Erlang API to SQLAlchemy Core
 %% author: github.com/snwight, northwight@gmail.com
 %% license: dbad
@@ -26,14 +26,16 @@
 %% operation and maintenance API
 %%
 start_link() ->
-    %% HARD-CODED argument list here... funky!
-    gen_server:start_link({local, ?MODULE}, ?MODULE, 
-			  ["sqlite:////tmp/test.db", 
-			   "../priv/schema1.sql"], []).
+    %% note the use of initialization parameters from app envs
+    erlang:display("ESQLA_SERVER:startlink"),
+    {ok, Conf} = application:get_env(esqla, sqlalchemy_config), 
+    {ok, TestDB} = application:get_env(esqla, test_db_loadfile),
+    gen_server:start_link({local, ?MODULE}, ?MODULE,  [Conf, TestDB], []).
 
 stop() ->  gen_server:cast(?MODULE, stop).
 
 init([SqlaConfigString, TestDB]) ->
+    erlang:display("ESQLA_SERVER:init"),
     %% start up python sibling module - it will await our instructions
     PythonPort = open_port({spawn, "python -u ../priv/esqla.py"},
 			   [{packet, 4}, binary, nouse_stdio, 

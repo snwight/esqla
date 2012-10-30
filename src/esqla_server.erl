@@ -27,7 +27,6 @@
 %%
 start_link() ->
     %% note the use of initialization parameters from app envs
-    erlang:display("ESQLA_SERVER:startlink"),
     {ok, Conf} = application:get_env(esqla, sqlalchemy_config), 
     {ok, TestDB} = application:get_env(esqla, test_db_loadfile),
     gen_server:start_link({local, ?MODULE}, ?MODULE,  [Conf, TestDB], []).
@@ -35,7 +34,6 @@ start_link() ->
 stop() ->  gen_server:cast(?MODULE, stop).
 
 init([SqlaConfigString, TestDB]) ->
-    erlang:display("ESQLA_SERVER:init"),
     %% start up python sibling module - it will await our instructions
     PythonPort = open_port({spawn, "python -u ../priv/esqla.py"},
 			   [{packet, 4}, binary, nouse_stdio, 

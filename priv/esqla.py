@@ -19,9 +19,6 @@ class esqla(Protocol):
     def handle_start(self, argList):
         # crank up SQLAlchemy engine
         [configString, testDB] = argList
-
-        print argList
-
         self.sqlacore = sqla(configString, testDB)
         if not self.sqlacore:
             return "failed start"

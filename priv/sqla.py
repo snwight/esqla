@@ -211,6 +211,8 @@ class sqla():
                 kvDict[kStr] = v
             else:
                 kvDict[kStr] = String(v)
+        for k, v in kvDict.items():
+            cmd = cmd.where(table.c[k] == v)
         self._checkConnection()
         result = self.conn.execute(cmd)
         return result.rowcount

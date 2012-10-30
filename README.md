@@ -1,68 +1,154 @@
-erlsqlacore
-===========
+esqla
+======
 
 Using erlport [ thank you Dmitry! https://github.com/hdima/erlport ] to expose a grossly simplified subset of the SQLAlchemy Core API as a small set of Erlang shell commands.
 
-I haven't packaged this up yet, too busy iterating...
+I've packaged this up as an OTP application, comprised of three Erlang modules (esqla_app, esqla_sup, esqla_server), the obligatory config source file (esqla.app.src) and two Python scripts (esqla.py and sqla.py). In addition you will need erlport and of course SQLAlchemy 0.7.4 or later.  
 
 You'll want to clone this repos:
 > git clone git@github.com:snwight/erlsqlacore.git
 
-grab a copy of erlport:
-> cd erlsqlacore/
+> cd esqla/priv
 
+Grab erlport and clone it as-is into esqla/priv:
 > git clone git://github.com/hdima/erlport.git
 
-The command line interface once you're in the Erlang shell is:
+> cd esqla
 
-compile
-> c(esqla).
+Assuming you have rebar in your exec path:
 
-establish port connection
-> Port = esqla:init().
+> rebar compile
 
-Start up SQLAlchemy engine, in this example with Sqlite and on-disk storage
-just change the 'configuration string' to connect to a running Postgres cluster, e.g.:
+> cd ebin
+
+Start a shell and the application:
+
+> erl
+>> Erlang R15B02 (erts-5.9.2) [source] [smp:2:2] [async-threads:0] [hipe] [kernel-poll:false]
+>> Eshell V5.9.2  (abort with ^G)
+
+1> l(esqla_app).
+{module,esqla_app}
+
+2>  application:start(esqla).
+ok
+
+This initializes and starts up the Python SQLAlchemy engine, in this example with Sqlite and on-disk storage - just change the 'configuration string' to connect to a running Postgres cluster, e.g.:
     "postgresql://user:password@/dbname"
 or Mysql, e.g.:
     "mysql://user:password@localhost/dbname"
 ...check the excellent SQLAlchemy documentation online for details at sqlalchemy.org
 
 
-start() also loads the test database into the chosen backend
-> esqla:start(Port, "sqlite:////tmp/test.db").
+And here is the new three-command API:
 
+get() - returns entire matching row currently - absent parameters match ANY
+> get("table", [{"column", val},...], [{"limit", val}, {"offset", val}])
 
-get() returns entire matching row currently - absent parameters match ANY
-> esqla:get(Port, [ "table_name", [ {"column_name", val}, ...], 
-			        [ {"limit": val}, {"offset": val} ] ])
+upsert() - update OR insert new (if primary key non-existent) 
+> upsert("table", {"primary_key, val}, [{"column", val},...])
 
-upsert() is update (on primary key match) OR insert (if primary key non-existent) 
-> esqla:upsert(Port, [ "table_name", {"primary_key_name", val},
-			        [ {"column_name", val}, ...] ])
-				
-remove() enthusiastically deletes matching rows - absent parameters match ANY!!!
-> esqla:remove(Port, [ "table_name", [ {"column_name", val}, ...] 
+remove() - deletes matching rows
+> remove("table", [{"column", val},...]) 
+
+schemata() - dumps out the current active schema as 'reflected' by SQLAlchemy
+> schemata()
 
 
 I should describe this thing better, though.
 
-esqla.erl delivers a simple command line get/upsert/remove interface to Python SQLAlchemy, specifically the Core API of that product, which abstracts the connection-level details of interacting with basically any extant SQL/RDBMS database - I've tested with MySql 5.x, Postgres 9.2.x, and Sqlite. 
+esqla.erl delivers a simple command line get/upsert/remove and schema inspect interface to Python SQLAlchemy, specifically the Core API of that product, which abstracts the connection-level details of interacting with basically any extant SQL/RDBMS database - I've tested with MySql 5.x, Postgres 9.2.x, and Sqlite. 
 
+esqla.py is the interface between erlport an the Erlang application logic. sqla.py is the interface between esqla.py an the SQLAlchemy engine. No Erlang port details leak into it, or SQLAlchemy details out of it. 
 
-In addition to esqla I provide two Python management modules:
-
-ErlSqlaCore.py, which handles the Erlang port interactions, and
-
-SqlaCore.py, which massages data in and out of the database.
 
 I will leave installation of SQLAlchemy to the reader, for now. I'm running 0.7.9, the latest stable version. 
 
 I include a sample SQL database and load file (combined into "schema1.sql") which is currently hard-coded to load when the ersqlacore starts up.
 
 
-example get() from test DB:
-> esqla:get(P, ["artist", [{}],  [{}] ]).                                
+example session using default test database:
+
+Erlang R15B02 (erts-5.9.2) [source] [smp:2:2] [async-threads:0] [hipe] [kernel-poll:false]
+
+Eshell V5.9.2  (abort with ^G)
+1> l(esqla_app).
+{module,esqla_app}
+
+2>  application:start(esqla).
+ok
+
+3> esqla_server:schemata().
+SQL schema:: 
+TABLE: album
+        albumid
+        albumname
+        albumdate
+        PRIMARY KEY: albumid
+TABLE: album_label
+        albumid
+        labelid
+        PRIMARY KEY: albumid
+        FOREIGN KEY: labelid  ON label: labelid 
+        FOREIGN KEY: albumid  ON album: albumid 
+TABLE: album_tracks
+        albumid
+        trackid
+        PRIMARY KEY: albumid
+        PRIMARY KEY: trackid
+        FOREIGN KEY: trackid  ON track: trackid 
+        FOREIGN KEY: albumid  ON album: albumid 
+TABLE: artist
+        artistid
+        artistname
+        artistgender
+        artistbday
+        PRIMARY KEY: artistid
+TABLE: grammy
+        grammyid
+        grammywinner
+        grammyclass
+        grammydate
+        PRIMARY KEY: grammyid
+        FOREIGN KEY: grammyid  ON album: albumid 
+TABLE: label
+        labelid
+        labelname
+        labelcity
+        PRIMARY KEY: labelid
+TABLE: track
+        trackid
+        trackname
+        tracklength
+        trackdate
+        PRIMARY KEY: trackid
+TABLE: track_artist
+        trackid
+        artistid
+        PRIMARY KEY: trackid
+        PRIMARY KEY: artistid
+        FOREIGN KEY: artistid  ON artist: artistid 
+        FOREIGN KEY: trackid  ON track: trackid 
+VIEW: artist_discography
+        artistname
+        artistid
+        trackname
+        track_id
+        albumname
+        album_id
+VIEW DEFINITION: 
+CREATE VIEW artist_discography AS
+select artistname, artist.artistid as artistid,
+trackname, track.trackid as track_id,
+albumname, album.albumid as album_id
+from artist, track, album, track_artist, album_tracks
+where artist.artistid = track_artist.artistid 
+and track.trackid = track_artist.trackid
+and album.albumid = album_tracks.albumid
+and album_tracks.trackid = track_artist.trackid
+ok
+
+4> esqla_server:get("artist", [{}], [{}]).
 [["artist","artistid",1],
  ["artist","artistname","bobby"],
  ["artist","artistgender","M"],
@@ -92,21 +178,39 @@ example get() from test DB:
  ["artist",[...]|...],
  [[...]|...]]
 
+5>  esqla_server:get("track", [{"trackid", 10}], [{}]). 
+[["track","trackid",10],
+ ["track","trackname","something happened part 1"],
+ ["track","tracklength",135],
+ ["track","trackdate","1997-08-09"]]
 
+6> esqla_server:get("track", [{"trackname", "hate song one"}], [{}]).
+[["track","trackid",6],
+ ["track","trackname","hate song one"],
+ ["track","tracklength",180],
+ ["track","trackdate","2001-08-09"]]
 
-add a match filter:
-> esqla:get(P, ["artist", [{"artistid", 1}], [{}]]).
-[["track","trackid",1],
- ["track","trackname","love song one"],
- ["track","tracklength",360],
- ["track","trackdate","2008-08-08"]
+7> esqla_server:upsert("track", {"trackid", 10}, [{"trackname", "love song seven"}]).
+1
 
+8> esqla_server:get("track", [{"trackid", 10}], [{}]). 
+[["track","trackid",10],
+ ["track","trackname","love song seven"],
+ ["track","tracklength",135],
+ ["track","trackdate","1997-08-09"]]
 
-delete that row:
-> esqla:remove(P, ["artist", [{"artistid", 1}]).
-> 1
+9> esqla_server:remove("track", [{"trackid", 10}]).      
+1
 
+10> esqla_server:get("track", [{"trackid", 10}], [{}]).   
+[]
 
-insert it again:
-> esqla:upsert(P, ["artist", {"artistid", 1}, [{"artistname","bobby"}, {artistgender","M"}, {"artistbday","1961-05-15"}]]).
-> 1
+11> esqla_server:remove("track", [{"trackname","love long two"}]). 
+0
+
+12> esqla_server:remove("track", [{"trackname","love song two"}]).
+1
+
+13> esqla_server:upsert("track", {"trackid", 21}, [{"trackname","love song 666"}]).
+1
+

@@ -51,7 +51,7 @@ upsert() - update OR insert new (if primary key non-existent)
 remove() - deletes matching rows
 > remove("table", [{"column", val},...]) 
 
-schemata() - dumps out the current active schema as 'reflected' by SQLAlchemy
+schemata() - dumps out the active schema as reflected through SQLAlchemy
 > schemata()
 
 
@@ -59,15 +59,15 @@ I should describe this thing better, though.
 
 esqla.erl delivers a simple command line get/upsert/remove and schema inspect interface to Python SQLAlchemy, specifically the Core API of that product, which abstracts the connection-level details of interacting with basically any extant SQL/RDBMS database - I've tested with MySql 5.x, Postgres 9.2.x, and Sqlite. 
 
-esqla.py is the interface between erlport an the Erlang application logic. sqla.py is the interface between esqla.py an the SQLAlchemy engine. No Erlang port details leak into it, or SQLAlchemy details out of it. 
-
+esqla.py is the interface between erlport and the Erlang application logic. 
+sqla.py is the interface between esqla.py and the SQLAlchemy engine. No Erlang port details leak into it, nor SQLAlchemy details out of it. 
 
 I will leave installation of SQLAlchemy to the reader, for now. I'm running 0.7.9, the latest stable version. 
 
 I include a sample SQL database and load file (combined into "schema1.sql") which is currently hard-coded to load when the ersqlacore starts up.
 
 
-example session using default test database:
+Here's an example session using the default test database:
 
 Erlang R15B02 (erts-5.9.2) [source] [smp:2:2] [async-threads:0] [hipe] [kernel-poll:false]
 
